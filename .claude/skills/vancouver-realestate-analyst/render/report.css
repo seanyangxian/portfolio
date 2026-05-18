@@ -1,0 +1,152 @@
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#242834;--border:#2e3340;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --green:#10b981;--green-bg:rgba(16,185,129,.12);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.12);
+  --radius:10px;--radius-sm:6px;
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  line-height:1.7;padding:0;margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.report{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+section{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:28px 32px;margin-bottom:20px;
+  transition:border-color .2s;
+}
+section:hover{border-color:#3e4452}
+
+/* ── Header ── */
+.report-header{
+  text-align:center;padding:48px 32px 40px;
+  background:linear-gradient(135deg,#1a1d27 0%,#1e2235 50%,#1a1d27 100%);
+  border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;
+}
+.report-header .label{
+  font-size:.7rem;letter-spacing:3px;text-transform:uppercase;
+  color:var(--blue);margin-bottom:12px;font-weight:600;
+}
+.report-header h1{font-size:1.45rem;font-weight:700;color:#fff;margin-bottom:6px}
+.report-header .addr{font-size:.95rem;color:var(--text2);margin-bottom:24px}
+.hero-metrics{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.hero-metric{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 22px;min-width:160px;text-align:center;
+}
+.hero-metric .val{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+.hero-metric .lbl{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.hero-metric.green .val{color:var(--green)}
+.hero-metric.amber .val{color:var(--amber)}
+.hero-metric.red .val{color:var(--red)}
+.hero-metric.blue .val{color:var(--blue)}
+
+/* ── Section Titles ── */
+.stitle{
+  font-size:1.05rem;font-weight:700;margin-bottom:18px;
+  display:flex;align-items:center;gap:10px;color:#fff;
+}
+.stitle .icon{font-size:1.15rem}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin:12px 0}
+thead th{
+  text-align:left;padding:10px 14px;font-weight:600;font-size:.72rem;
+  text-transform:uppercase;letter-spacing:.8px;color:var(--text3);
+  border-bottom:2px solid var(--border);background:var(--surface2);
+}
+thead th:first-child{border-radius:var(--radius-sm) 0 0 0}
+thead th:last-child{border-radius:0 var(--radius-sm) 0 0}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+tbody tr:hover{background:rgba(255,255,255,.04)}
+td strong{color:#fff}
+
+/* ── Badges ── */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;
+}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+
+/* ── Notices ── */
+.notice{
+  padding:14px 18px;border-radius:var(--radius-sm);font-size:.84rem;
+  margin:14px 0;line-height:1.6;border-left:3px solid;
+}
+.notice-warn{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.notice-info{background:var(--blue-bg);border-color:var(--blue);color:var(--text)}
+.notice-danger{background:var(--red-bg);border-color:var(--red);color:var(--text)}
+
+/* ── Collapsible ── */
+details{margin-top:16px;border-top:1px solid var(--border);padding-top:4px}
+summary{
+  cursor:pointer;font-size:.82rem;font-weight:600;color:var(--blue);
+  padding:10px 0;list-style:none;display:flex;align-items:center;gap:6px;
+  user-select:none;
+}
+summary::before{content:'▸';transition:transform .2s;display:inline-block}
+details[open] summary::before{transform:rotate(90deg)}
+summary::-webkit-details-marker{display:none}
+.detail-body{padding:16px 0 4px;font-size:.87rem;color:var(--text2);line-height:1.8}
+.detail-body p{margin-bottom:12px}
+
+/* ── Tailwinds / Headwinds ── */
+.tw-hw{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.tw-col h4{font-size:.82rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.tw-col.green h4{color:var(--green)}
+.tw-col.red h4{color:var(--red)}
+.tw-col ul{list-style:none;padding:0}
+.tw-col li{font-size:.83rem;color:var(--text2);padding:6px 0;border-bottom:1px solid var(--border);line-height:1.5}
+.tw-col li:last-child{border-bottom:none}
+
+/* ── Factor Cards ── */
+.factors{display:grid;gap:10px;margin:16px 0}
+.factor-row{
+  display:grid;grid-template-columns:140px 1fr 1fr;gap:12px;
+  padding:12px 16px;background:var(--surface2);border-radius:var(--radius-sm);
+  font-size:.83rem;align-items:center;
+}
+.factor-row .f-label{font-weight:600;color:#fff}
+.factor-row .f-signal{color:var(--text2)}
+.factor-row .f-impl{color:var(--text3)}
+
+/* ── Questions ── */
+ol.questions{padding-left:20px}
+ol.questions li{font-size:.87rem;color:var(--text2);padding:8px 0;border-bottom:1px solid var(--border);line-height:1.6}
+ol.questions li:last-child{border-bottom:none}
+
+/* ── Disclaimer ── */
+.disclaimer{text-align:center;font-size:.75rem;color:var(--text3);padding:24px;margin-top:12px}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .report{padding:12px 10px 40px}
+  section{padding:20px 16px}
+  .hero-metrics{flex-direction:column;align-items:center}
+  .tw-hw{grid-template-columns:1fr}
+  .factor-row{grid-template-columns:1fr;gap:4px}
+  table{font-size:.78rem}
+  thead th,tbody td{padding:8px 10px}
+}
+
+/* ── Print ── */
+@media print{
+  body{background:#fff;color:#111}
+  section{border:1px solid #ddd;break-inside:avoid}
+  .report-header{background:#f8f9fa}
+  .hero-metric{border:1px solid #ddd}
+}

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>房产分析 — {{property.address}}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>{{css}}</style></head>
+<body><div class="report">
+
+{{!-- ═══ HEADER ═══ --}}
+<div class="report-header">
+  <div class="label">📋 房产分析报告 Property Analysis Report</div>
+  <h1>{{property.type_chinese}}</h1>
+  <div class="addr">{{property.address}}</div>
+  <div class="hero-metrics">
+    <div class="hero-metric blue"><div class="val">{{money (or property.asking_price property.estimated_value)}}</div><div class="lbl">{{#if (eq property.analysis_mode "listed")}}挂牌价{{else}}估算价值{{/if}}</div></div>
+    <div class="hero-metric green"><div class="val">{{valuation.range_display}}</div><div class="lbl">估算成交区间</div></div>
+    <div class="hero-metric amber"><div class="val">{{pct cma.snlr_pct}}</div><div class="lbl">SNLR</div></div>
+    <div class="hero-metric {{gradeColor transaction_activity.grade}}"><div class="val">{{gradeLabel transaction_activity.grade}}</div><div class="lbl">市场活跃度</div></div>
+  </div>
+</div>
+<div class="notice notice-warn">⚠️ 市场数据说明: 核心数据（SNLR、基准价格、空置率、央行利率）嵌入截至2026年初。如市场条件已发生重大变化，建议在决策前获取最新REBGV/BCREA统计数据。</div>
+
+{{!-- ═══ PROPERTY SNAPSHOT ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">🏠</span>房产速览 Property Snapshot</div>
+  <div class="notice notice-info">📋 {{#if (eq property.analysis_mode "listed")}}本房产为活跃在售挂牌。分析基于挂牌价、公开市场数据及可比成交记录。{{else}}本房产目前无在售挂牌。所有估值均为推算。{{/if}}</div>
+  <table><thead><tr><th>项目</th><th>详情</th></tr></thead><tbody>
+    <tr><td>地址</td><td>{{property.address}}</td></tr>
+    <tr><td>房产类型</td><td>{{property.type_chinese}}</td></tr>
+    {{#if property.building_name}}<tr><td>所属楼盘</td><td>{{property.building_name}}</td></tr>{{/if}}
+    {{#if (eq property.analysis_mode "listed")}}
+      <tr><td>挂牌价</td><td>{{money property.asking_price}}</td></tr>
+      {{#if property.price_history}}<tr><td>历史挂牌</td><td>{{renderPriceHistory property.price_history}}</td></tr>{{/if}}
+    {{else}}
+      {{#if property.bc_assessment}}<tr><td>BC Assessment</td><td>{{money property.bc_assessment.total}}（土地{{money property.bc_assessment.land}} + 建筑{{money property.bc_assessment.improvements}}）</td></tr>{{/if}}
+      {{#if property.last_sold}}<tr><td>最近成交</td><td>{{money property.last_sold.price}}（{{property.last_sold.date}}）</td></tr>{{/if}}
+      <tr><td>推算价值</td><td>{{property.estimated_value_display}}</td></tr>
+    {{/if}}
+    {{#if property.initial_completion_price}}<tr><td>首次完工成交价</td><td>{{property.initial_completion_price.price_display}}（{{property.initial_completion_price.year}}年）</td></tr>{{/if}}
+    {{#if property.benchmark}}<tr><td>基准价 Benchmark</td><td>{{property.benchmark.display}}</td></tr>{{/if}}
+    {{#if property.price_vs_benchmark}}<tr><td>{{#if (eq property.analysis_mode "listed")}}挂牌价 vs 基准{{else}}推算 vs 基准{{/if}}</td><td>{{property.price_vs_benchmark}}</td></tr>{{/if}}
+    {{#if property.strata_fee}}<tr><td>Strata管理费</td><td>{{money property.strata_fee}}/月{{#if property.strata_fee_per_sqft}} (${{property.strata_fee_per_sqft}}/sqft){{/if}}</td></tr>{{/if}}
+    {{#if property.dom}}<tr><td>在市天数 DOM</td><td>{{property.dom}}</td></tr>{{/if}}
+    <tr><td>面积/格局</td><td>{{property.size_sqft}} sqft · {{property.bedrooms}}卧 · {{property.bathrooms}}卫</td></tr>
+    <tr><td>建成年份</td><td>{{property.year_built}}</td></tr>
+    {{#if property.developer}}<tr><td>开发商</td><td>{{property.developer}}</td></tr>{{/if}}
+    {{#if property.construction_type}}<tr><td>建筑类型</td><td>{{property.construction_type}}</td></tr>{{/if}}
+    {{#each property.extra_fields}}<tr><td>{{humanizeKey @key}}</td><td>{{this}}</td></tr>{{/each}}
+  </tbody></table>
+</section>
+
+{{!-- ═══ ECONOMIC ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">💰</span>经济与融资 Economic & Financing</div>
+  <p><strong>央行与利率:</strong> BoC {{economic.boc_rate}}% · 5年固定 {{economic.fixed_rate_range.[0]}}%–{{economic.fixed_rate_range.[1]}}% · 分析采用 {{economic.analysis_rate}}%</p>
+  <p><strong>按揭月供（基于{{#if (eq property.analysis_mode "listed")}}挂牌价{{else}}推算价值{{/if}} {{money economic.reference_price}}）:</strong></p>
+  <table><thead><tr><th>利率情景</th><th>20%首付 月供</th><th>50%首付 月供</th></tr></thead><tbody>
+    {{#each (rateRows economic)}}
+    <tr><td>{{{label}}}</td><td>{{{d20}}}</td><td>{{{d50}}}</td></tr>
+    {{/each}}
+  </tbody></table>
+  <p><strong>GDS/TDS 评估:</strong>{{#if economic.gds_tds.assumed_median_income_display}} <span style="color:var(--text3);font-size:.82rem;font-weight:400">（计算基准：{{economic.gds_tds.assumed_median_income_display}}）</span>{{/if}}</p>
+  <table><thead><tr><th>指标</th><th>20%首付</th><th>50%首付</th></tr></thead><tbody>
+    <tr><td>按揭月供</td><td>{{money economic.gds_tds.down_20.mortgage_monthly}}</td><td>{{money economic.gds_tds.down_50.mortgage_monthly}}</td></tr>
+    <tr><td>物业税</td><td>{{money economic.gds_tds.down_20.tax_monthly}}/月</td><td>{{money economic.gds_tds.down_50.tax_monthly}}/月</td></tr>
+    <tr><td>Strata/保险</td><td>{{money economic.gds_tds.down_20.strata_or_insurance_monthly}}/月</td><td>{{money economic.gds_tds.down_50.strata_or_insurance_monthly}}/月</td></tr>
+    <tr><td><strong>GDS 总计</strong></td><td><strong>{{money economic.gds_tds.down_20.gds_total}}</strong></td><td><strong>{{money economic.gds_tds.down_50.gds_total}}</strong></td></tr>
+    <tr><td><strong>GDS 比率</strong></td><td><strong>{{pct economic.gds_tds.down_20.gds_ratio_pct}}</strong> {{{gdsBadge economic.gds_tds.down_20.gds_ratio_pct}}}</td><td><strong>{{pct economic.gds_tds.down_50.gds_ratio_pct}}</strong> {{{gdsBadge economic.gds_tds.down_50.gds_ratio_pct}}}</td></tr>
+    <tr><td>最低年收入 (GDS 32%)</td><td><strong>{{money economic.gds_tds.down_20.min_income_for_32pct}}</strong></td><td><strong>{{money economic.gds_tds.down_50.min_income_for_32pct}}</strong></td></tr>
+  </tbody></table>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p economic.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ DEMOGRAPHICS ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">👥</span>人口与租赁需求 Demographics & Rental</div>
+  <table><thead><tr><th>指标</th><th>数据</th></tr></thead><tbody>
+    <tr><td>社区人口 (Census 2021)</td><td>{{demographics.population_table.census_pop_display}}</td></tr>
+    <tr><td>历年人口变化</td><td>{{demographics.population_table.growth_display}}</td></tr>
+    <tr><td>增长分类</td><td>{{growthLabel demographics.population_table.growth_classification}}</td></tr>
+    <tr><td>平均家庭人口</td><td>{{demographics.population_table.avg_household_size}} 人</td></tr>
+    <tr><td>有孩子家庭</td><td>{{demographics.population_table.pct_with_children}}%</td></tr>
+    <tr><td>中位年龄</td><td>{{demographics.population_table.median_age}} 岁</td></tr>
+    <tr><td>住房类型</td><td>{{demographics.population_table.dwelling_mix_display}}</td></tr>
+    <tr><td>重大开发</td><td>{{demographics.population_table.major_development_display}}</td></tr>
+  </tbody></table>
+  {{#if demographics.rental_cashflow}}
+  <p style="margin-top:16px"><strong>投资者现金流:</strong></p>
+  <table><thead><tr><th>项目</th><th>估算</th></tr></thead><tbody>
+    <tr><td>估算月租金</td><td>{{demographics.rental_cashflow.est_rent_display}}</td></tr>
+    <tr><td>月持有成本（20%首付）</td><td>{{money demographics.rental_cashflow.monthly_cost_20}}</td></tr>
+    {{#if demographics.rental_cashflow.cost_breakdown_20_display}}<tr><td style="color:var(--text3);font-size:.8rem;padding-left:22px">└ 构成</td><td style="color:var(--text3);font-size:.8rem">{{demographics.rental_cashflow.cost_breakdown_20_display}}</td></tr>{{/if}}
+    <tr><td><strong>现金流（20%首付）</strong></td><td>{{{cashflowBadge demographics.rental_cashflow.cashflow_20}}}</td></tr>
+    <tr><td>月持有成本（50%首付）</td><td>{{money demographics.rental_cashflow.monthly_cost_50}}</td></tr>
+    {{#if demographics.rental_cashflow.cost_breakdown_50_display}}<tr><td style="color:var(--text3);font-size:.8rem;padding-left:22px">└ 构成</td><td style="color:var(--text3);font-size:.8rem">{{demographics.rental_cashflow.cost_breakdown_50_display}}</td></tr>{{/if}}
+    <tr><td><strong>现金流（50%首付）</strong></td><td>{{{cashflowBadge demographics.rental_cashflow.cashflow_50}}}</td></tr>
+  </tbody></table>
+  {{/if}}
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p demographics.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ POLICY & ZONING ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">🏛️</span>政策与分区 Policy & Zoning</div>
+  <table><thead><tr><th>指标</th><th>评估</th></tr></thead><tbody>
+    <tr><td>TOA 状态</td><td>{{policy_zoning.toa_status_display}}</td></tr>
+    <tr><td>Bill 44 SSMUH</td><td>{{policy_zoning.bill44_display}}</td></tr>
+    <tr><td>DCC 影响</td><td>{{policy_zoning.dcc_display}}</td></tr>
+    <tr><td>出租限制</td><td>{{policy_zoning.rental_restrictions_display}}</td></tr>
+    {{#if policy_zoning.dual_valuation_display}}<tr><td>双重估值</td><td>{{policy_zoning.dual_valuation_display}}</td></tr>{{/if}}
+  </tbody></table>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p policy_zoning.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ LAND SUPPLY ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">🏗️</span>土地供应 Land Supply</div>
+  <table><thead><tr><th>指标</th><th>评估</th></tr></thead><tbody>
+    <tr><td>审批速度</td><td>{{land_supply.approval_speed_display}}</td></tr>
+    <tr><td>供应展望</td><td>{{land_supply.supply_outlook_display}}</td></tr>
+  </tbody></table>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p land_supply.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ CMA ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">📊</span>市场健康度与可比成交 CMA</div>
+  <table><thead><tr><th>指标</th><th>数据</th><th>评估</th></tr></thead><tbody>
+    <tr><td>SNLR</td><td>{{pct cma.snlr_pct}}</td><td>{{cma.snlr_assessment}}</td></tr>
+    <tr><td>基准价</td><td>{{money cma.segment_benchmark_price}}</td><td>{{cma.segment_benchmark_yoy}}</td></tr>
+    <tr><td>vs 基准</td><td>{{cma.price_vs_benchmark}}</td><td>{{cma.price_vs_benchmark_assessment}}</td></tr>
+    {{#if cma.dom}}<tr><td>DOM</td><td>{{cma.dom}}天</td><td>{{cma.dom_assessment}}</td></tr>{{/if}}
+  </tbody></table>
+  <p style="margin-top:16px"><strong>近期可比成交:</strong></p>
+  <table><thead><tr><th>可比成交</th><th>成交价</th><th>日期</th><th>面积</th><th>卧/卫</th><th>$/sqft</th><th>vs 标的</th></tr></thead><tbody>
+    {{#each cma.comps}}<tr><td>{{address}}</td><td>{{money sold_price}}</td><td>{{sold_date}}</td><td>{{sqft}}</td><td>{{bed_bath}}</td><td>{{money price_per_sqft}}</td><td>{{vs_subject}}</td></tr>{{/each}}
+    {{#if cma.subject_row}}<tr><td><strong>标的物业</strong></td><td><strong>{{money cma.subject_row.price}}</strong></td><td>—</td><td>{{cma.subject_row.sqft}}</td><td>{{cma.subject_row.bed_bath}}</td><td><strong>{{money cma.subject_row.price_per_sqft}}</strong></td><td><strong>基准</strong></td></tr>{{/if}}
+  </tbody></table>
+  <p style="margin-top:16px"><strong>5年走势:</strong></p>
+  <table><thead><tr><th>指标</th><th>数据</th></tr></thead><tbody>
+    <tr><td>5年累计</td><td>{{cma.five_year_cumulative}}</td></tr>
+    <tr><td>CAGR</td><td>{{cma.cagr_5yr}}</td></tr>
+    <tr><td>峰值</td><td>{{cma.peak_display}}</td></tr>
+    <tr><td>当前vs峰值</td><td>{{cma.current_vs_peak}}</td></tr>
+    <tr><td>周期阶段</td><td>{{cma.cycle_phase}}</td></tr>
+  </tbody></table>
+  <details><summary>展开完整走势分析</summary><div class="detail-body">
+    {{{nl2p cma.comps_analysis_text}}}
+    <table><thead><tr><th>年份</th><th>成交量</th><th>平均价</th><th>中位价</th><th>$/sqft</th><th>YoY价格</th><th>YoY量</th><th>周期</th></tr></thead><tbody>
+      {{#each cma.five_year_trend}}<tr><td>{{year}}</td><td>{{volume}}</td><td>{{money avg_price}}</td><td>{{money median_price}}</td><td>{{money median_psf}}</td><td>{{yoy_price_change}}</td><td>{{yoy_volume_change}}</td><td>{{cycle_phase}}</td></tr>{{/each}}
+    </tbody></table>
+    {{{nl2p cma.trend_narrative}}}
+  </div></details>
+</section>
+
+{{!-- ═══ TRANSACTION ACTIVITY ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">📈</span>交易活跃度 Transaction Activity</div>
+  <table><thead><tr><th>指标</th><th>数据</th></tr></thead><tbody>
+    <tr><td>SNLR</td><td>{{transaction_activity.snlr_display}}</td></tr>
+    <tr><td>月成交量</td><td>{{transaction_activity.monthly_volume_display}}</td></tr>
+    <tr><td>平均DOM</td><td>{{transaction_activity.avg_dom_display}}</td></tr>
+    <tr><td>吸纳率</td><td>{{transaction_activity.absorption_display}}</td></tr>
+    <tr><td>挂牌成交比</td><td>{{transaction_activity.list_to_sale_display}}</td></tr>
+    <tr><td>活跃度</td><td><span class="badge {{gradeBadge transaction_activity.grade}}">{{gradeLabel transaction_activity.grade}}</span></td></tr>
+  </tbody></table>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p transaction_activity.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ MARKET POSITIONING ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">🏠</span>市场定位 Market Positioning</div>
+  <p>{{market_positioning.summary_text}}</p>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p market_positioning.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ RESIDENT PROFILE ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">👥</span>住户画像 Resident Profile</div>
+  <p>{{resident_profile.summary_text}}</p>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p resident_profile.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ HYPERLOCAL PREMIUMS ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">📍</span>超本地化溢价 Hyper-Local Premiums</div>
+  <table><thead><tr><th>因素</th><th>评估</th><th>溢价/折价</th></tr></thead><tbody>
+    {{#each hyperlocal_premiums.factors}}<tr><td>{{factor}}</td><td>{{assessment}}</td><td>{{premium}}</td></tr>{{/each}}
+    <tr><td><strong>超本地化净溢价</strong></td><td></td><td><strong>{{hyperlocal_premiums.net_premium_display}}</strong></td></tr>
+  </tbody></table>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p hyperlocal_premiums.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ BUILDER ═══ --}}
+{{#if builder_reputation.name}}
+{{#unless (eq property.type "detached")}}
+<section>
+  <div class="stitle"><span class="icon">🏗️</span>开发商声誉 Builder Reputation</div>
+  <p><strong>开发商:</strong> {{builder_reputation.name}} · <strong>评级:</strong> <span class="badge {{tierBadge builder_reputation.tier}}">{{{tierLabel builder_reputation.tier}}}</span></p>
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p builder_reputation.analysis_text}}}</div></details>
+</section>
+{{/unless}}
+{{/if}}
+
+{{!-- ═══ SCHOOL ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">🎓</span>学区分析 School Catchment</div>
+  <table><thead><tr><th>学校</th><th>类型</th><th>评分</th><th>溢价</th></tr></thead><tbody>
+    {{#each school_catchment.schools}}<tr><td>{{name}}</td><td>{{type}}</td><td><strong>{{fraser_score}}</strong>/10</td><td>{{premium}}</td></tr>{{/each}}
+  </tbody></table>
+  {{#if school_catchment.toa_double_premium}}<div class="notice notice-warn">⚠️ 双重溢价: TOA区域 + 顶级学区</div>{{/if}}
+  <details><summary>展开深度分析</summary><div class="detail-body">{{{nl2p school_catchment.analysis_text}}}</div></details>
+</section>
+
+{{!-- ═══ HOLDING COSTS ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">💸</span>持有成本 Cost of Holding</div>
+  <table><thead><tr><th>项目</th><th>20%首付</th><th>50%首付</th><th>备注</th></tr></thead><tbody>
+    <tr><td>首付金额</td><td>{{money holding_costs.cost_table.down_20.down_payment}}</td><td>{{money holding_costs.cost_table.down_50.down_payment}}</td><td></td></tr>
+    <tr><td>贷款金额</td><td>{{money holding_costs.cost_table.down_20.loan_amount}}</td><td>{{money holding_costs.cost_table.down_50.loan_amount}}</td><td></td></tr>
+    <tr><td>按揭月供</td><td>{{money holding_costs.cost_table.down_20.mortgage_monthly}}</td><td>{{money holding_costs.cost_table.down_50.mortgage_monthly}}</td><td>{{holding_costs.cost_table.rate}}%</td></tr>
+    <tr><td>Strata管理费</td><td>{{money holding_costs.cost_table.down_20.strata_monthly}}</td><td>{{money holding_costs.cost_table.down_50.strata_monthly}}</td><td>{{#if holding_costs.cost_table.strata_per_sqft}}${{holding_costs.cost_table.strata_per_sqft}}/sqft{{/if}}</td></tr>
+    <tr><td>物业税</td><td>{{money holding_costs.cost_table.down_20.tax_monthly}}</td><td>{{money holding_costs.cost_table.down_50.tax_monthly}}</td><td>{{#if holding_costs.cost_table.annual_tax}}年{{money holding_costs.cost_table.annual_tax}}{{/if}}</td></tr>
+    <tr><td>保险/备用</td><td>{{money holding_costs.cost_table.down_20.insurance_monthly}}</td><td>{{money holding_costs.cost_table.down_50.insurance_monthly}}</td><td></td></tr>
+    <tr><td><strong>月总成本</strong></td><td><strong>{{money holding_costs.cost_table.down_20.total_monthly}}</strong></td><td><strong>{{money holding_costs.cost_table.down_50.total_monthly}}</strong></td><td></td></tr>
+  </tbody></table>
+  {{#if holding_costs.strata_health}}<p style="margin-top:12px"><strong>Strata健康:</strong> <span class="badge {{strataRatingBadge holding_costs.strata_health.rating}}">{{strataRatingLabel holding_costs.strata_health.rating}}</span></p>{{/if}}
+  <details><summary>展开深度分析（含机会成本 & Strata健康）</summary><div class="detail-body">
+    {{{nl2p holding_costs.opportunity_cost_text}}}
+    {{#if holding_costs.strata_health}}{{{nl2p holding_costs.strata_health.analysis_text}}}{{/if}}
+  </div></details>
+</section>
+
+{{!-- ═══ VALUATION & ASSESSMENT ═══ --}}
+<section>
+  <div class="stitle"><span class="icon">🎯</span>估值与综合判断 Valuation & Assessment</div>
+  <p><strong>估值构建:</strong></p>
+  <table><thead><tr><th>步骤</th><th>计算</th></tr></thead><tbody>
+    {{#each valuation.methodology_steps}}<tr><td>{{step}}</td><td>{{calculation}}</td></tr>{{/each}}
+  </tbody></table>
+  <div class="notice notice-info" style="font-size:1.05rem;font-weight:600;text-align:center;margin:20px 0">最终估算{{#if valuation.mode_b}}市场价值{{else}}成交价{{/if}}区间: {{valuation.range_display}}</div>
+  <p style="color:var(--text2);font-style:italic">{{valuation.one_sentence_rationale}}</p>
+  {{#if valuation.reality_check_text}}<details><summary>展开估值推演</summary><div class="detail-body">{{{nl2p valuation.reality_check_text}}}</div></details>{{/if}}
+
+  <div class="tw-hw">
+    <div class="tw-col green"><h4>✅ 核心顺风</h4><ul>{{#each tailwinds}}<li>{{this}}</li>{{/each}}</ul></div>
+    <div class="tw-col red"><h4>⚠️ 核心逆风</h4><ul>{{#each headwinds}}<li>{{this}}</li>{{/each}}</ul></div>
+  </div>
+
+  {{#if factor_summary.length}}
+  <p style="margin-top:16px"><strong>⚖️ 综合因素:</strong></p>
+  <div class="factors">{{#each factor_summary}}<div class="factor-row"><div class="f-label">{{factor}}</div><div class="f-signal">{{signal}}</div><div class="f-impl">{{implication}}</div></div>{{/each}}</div>
+  {{/if}}
+
+  <div class="notice notice-info" style="margin-top:20px"><strong>💡 综合判断:</strong><br>{{{nl2br overall_assessment}}}</div>
+
+  {{#if key_questions.length}}
+  <p style="margin-top:16px"><strong>💬 决策前必须厘清的问题:</strong></p>
+  <ol class="questions">{{#each key_questions}}<li>{{this}}</li>{{/each}}</ol>
+  {{/if}}
+
+  <div class="notice notice-warn" style="margin-top:16px">⚠️ 分析师提示: 物业税率、Strata管理费及折旧报告均具流动性。买家在交易前必须独立核实最新数据。</div>
+</section>
+
+<div class="disclaimer">⚠️ 免责声明: 本分析仅供信息参考。用户在交易前应咨询持牌REALTOR®、按揭经纪人和律师。</div>
+
+</div></body></html>

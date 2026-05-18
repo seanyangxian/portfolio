@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(vancouver-realestate-analyst)",
+      "Skill(vancouver-realestate-analyst:*)",
+      "WebFetch(domain:www.zillow.com)",
+      "WebSearch",
+      "WebFetch(domain:www.zealty.ca)"
+    ]
+  }
+}
